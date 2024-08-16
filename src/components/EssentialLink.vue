@@ -1,9 +1,8 @@
 <template>
   <q-item
+  class='items-center'
     clickable
-    tag="a"
-    target="_blank"
-    :href="link"
+    @click='goPage(link)'
   >
     <q-item-section
       v-if="icon"
@@ -12,11 +11,8 @@
       <q-icon :name="icon" />
     </q-item-section>
 
-    <q-item-section>
+    <q-item-section >
       <q-item-label>{{ title }}</q-item-label>
-      <q-item-label caption>
-        {{ caption }}
-      </q-item-label>
     </q-item-section>
   </q-item>
 </template>
@@ -43,6 +39,11 @@ export default {
     icon: {
       type: String,
       default: ''
+    }
+  },
+  methods:{
+    goPage(link){
+      this.$router.push({name:link})
     }
   }
 }

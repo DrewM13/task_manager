@@ -12,10 +12,8 @@
         />
 
         <q-toolbar-title>
-          Quasar App
+          Gerenciador de tarefas
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
       </q-toolbar>
     </q-header>
 
@@ -25,13 +23,7 @@
       bordered
       content-class="bg-grey-1"
     >
-      <q-list>
-        <q-item-label
-          header
-          class="text-grey-8"
-        >
-          Essential Links
-        </q-item-label>
+      <q-list bordered>
         <EssentialLink
           v-for="link in essentialLinks"
           :key="link.title"
@@ -40,7 +32,12 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container  >
+      <q-breadcrumbs>
+  <q-breadcrumbs-el label="Home" icon="home" />
+  <q-breadcrumbs-el label="Components" icon="widgets" />
+  <q-breadcrumbs-el label="Breadcrumbs" icon="navigation" />
+</q-breadcrumbs>
       <router-view />
     </q-page-container>
   </q-layout>
@@ -51,46 +48,14 @@ import EssentialLink from 'components/EssentialLink.vue'
 
 const linksData = [
   {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
+    title: 'Dashboard',
+    icon: 'space_dashboard',
+    link: 'dashboard'
   },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
+   {
+    title: 'Projetos',
+    icon: 'view_timeline',
+    link: 'projects'
   }
 ]
 
