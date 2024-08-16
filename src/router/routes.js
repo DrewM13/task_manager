@@ -9,19 +9,34 @@ const routes = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
+    redirect: 'dashboard',
     children: [
       {
-        path: '',
+         path:'dashboard',
+         name:'dashboard',
+         meta: {
+          breadCrumb: 'Início'
+        },
+         component: () => import('pages/DashBoard.vue')
+      },
+      {
+        path: 'projects',
+        meta: {
+          breadCrumb: 'Projetos'
+        },
         component: () => import('pages/Project/Index.vue'),
         children:[
           {
-            path: 'projects',
+            path: '',
             name:'projects',
             component: () => import('pages/Project/List.vue'),
           },
           {
             path: ':id/tasks',
             name:'tasks',
+            meta: {
+              breadCrumb: 'Tarefas'
+            },
             component: () => import('pages/Task/Index.vue'),
             children:[
               {

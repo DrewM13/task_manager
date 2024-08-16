@@ -4,12 +4,12 @@
     <q-card-section class='text-h3 text-center'>
     Login
   </q-card-section>
-    <q-form @submit="onSubmit()" class="q-gutter-md" >
+    <q-form @submit="login(loginObj)" class="q-gutter-md" >
       <q-card-section class='text-h3 text-center'>
-        <q-input dense outlined class='col-3'  v-model="mail" label="Login"
+        <q-input dense outlined class='col-3'  v-model="loginObj.vchUserName" label="Login"
           lazy-rules :rules="[ val => val !== null && val !== '' || 'Login inválido']"
           />
-          <q-input dense outlined :type="isPWD?'password':'text'" v-model="password" label="Senha" lazy-rules
+          <q-input dense outlined :type="isPWD?'password':'text'" v-model="loginObj.vchPassword" label="Senha" lazy-rules
           :rules="[
           val => val !== null && val !== '' || 'Senha inválida',
           ]"
@@ -31,30 +31,34 @@
 </template>
 
 <script>
-
+import AuthService from 'src/services/AuthService'
+import notify from 'src/mixins/notify'
 export default{
-
+mixins:[notify],
   data(){
     return {
-  mail: "",
-  password:"",
-  isPWD:true,
+      AuthService: new AuthService(),
+      loginObj:{
+        vchUserName: "",
+        vchPassword:""
+      },
+      isPWD:true
     }
   },
-  method:{
-    onSubmit(){
-
-    },
-    emailValidation(mail){
-      const validator = /^[a-z0-9.]+@[a-z0-9]+\.[a-z]+\.([a-z]+)?$/i
-      console.log(mail);
-      console.log(validator.test(mail));
-
-      if(validator.test(mail)){
-        return true
-      } else{
-        return false
+  methods:{
+    login(data){
+      const login = {
+        vchUserName: data.vchUserName,
+        vchPassword: data.vchPassword
       }
+      this.AuthService.login(login)
+      .then((token)=>{
+        localStorage.setItem('jwtoken', token)
+        this.$router.push({name:'dashboard'})
+      })
+      .catch((error)=>{
+        this.errorNotify(error)
+      })
     }
   }
 }

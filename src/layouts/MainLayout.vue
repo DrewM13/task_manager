@@ -33,11 +33,7 @@
     </q-drawer>
 
     <q-page-container  >
-      <q-breadcrumbs>
-  <q-breadcrumbs-el label="Home" icon="home" />
-  <q-breadcrumbs-el label="Components" icon="widgets" />
-  <q-breadcrumbs-el label="Breadcrumbs" icon="navigation" />
-</q-breadcrumbs>
+
       <router-view />
     </q-page-container>
   </q-layout>

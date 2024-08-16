@@ -10,7 +10,6 @@ http.defaults.headers.common['Access-Control-Allow-Origin'] = '*'
 http.interceptors.request.use(
   config => {
     const token = localStorage.getItem("jwtoken")
-    localStorage.setItem('EXPIRED_TOKEN', Date.now())
     if (token) {
       config.headers['Authorization'] = token
     }
