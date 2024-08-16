@@ -31,6 +31,7 @@ export default function (/* { store, ssrContext } */) {
 
     if (to.matched.some(record => record.name)) {
       if (!token || isTokenExpired(token)) {
+        localStorage.removeItem('jwtoken')
         next('/login');
       } else {
         next();

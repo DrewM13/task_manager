@@ -9,7 +9,7 @@ export default class TimeTrackerService extends BaseService{
       const response = await this.http.get(`${this.api}/getbyidtask/${idTask}`)
       return response.data
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 }

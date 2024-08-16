@@ -10,7 +10,7 @@ export default class TaskService extends BaseService{
       const response = await this.http.get(`${this.api}/getbyidproject/${idProject}`)
       return response.data
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 }

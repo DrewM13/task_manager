@@ -2,7 +2,7 @@
   "name": "task-manager",
   "version": "0.0.1",
   "description": "task manager",
-  "productName": "Quasar App",
+  "productName": "Gerenciador de tarefas",
   "author": "andrew maciel",
   "private": true,
   "scripts": {

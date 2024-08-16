@@ -11,7 +11,7 @@ export default class AuthService extends BaseService{
 
       return response.data
     } catch (error) {
-      throw error.response.data
+      throw error
     }
 
   }
