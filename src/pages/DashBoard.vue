@@ -47,8 +47,14 @@
     <div>    {{task.vchCollaboratorName || 'Sem colaborador atribuído'}}</div>
 
   </q-card-section>
-   <q-card-section class='text-bold q-pb-none q-pt-sm'>
-    Tempos rastreados:
+   <q-card-section class=' q-pb-none q-pt-sm row'>
+    <div class='col text-bold'>
+      Tempos rastreados:
+    </div>
+    <div class='col text-right'>
+      Total rastreado:
+      {{  getTimeTracked(task.timeTrackeds)}}
+    </div>
   </q-card-section>
 <q-card-section>
     <q-card class="q-mx-md" flat bordered>
@@ -164,6 +170,16 @@ export default {
         .catch((error) => {
           this.errorNotify(error.message)
         })
+    },
+    getTimeTracked(timeTrackeds){
+        const timeTracked = timeTrackeds.filter(item=>!!item.idTimeTracked).map(item => {
+              this.timeZoneFormat = item.vchTimeZoneID
+              const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID);
+              const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID);
+              const entry = `${formattedStart} - ${formattedEnd}`;
+              return entry
+            })
+      return this.getTotalTime(timeTracked)
     }
   }
 }
