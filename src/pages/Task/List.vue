@@ -436,7 +436,9 @@
         this.TimeTrackerService.getByIDTask(idTask)
           .then((res) => {
             this.timeTraked = [...res]
-            this.timeList = res.map(item => {
+            this.timeList = res.sort(function(a,b){
+                return new Date(a.dtmStart) - new Date(b.dtmStart);
+              }).map(item => {
               this.timeZoneFormat = item.vchTimeZoneID
               const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID);
               const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID);
@@ -452,7 +454,9 @@
         this.isLoading = true
         this.TimeTrackerService.getByIDTask(idTask)
           .then((res) => {
-            this.timeList = res.map(item => {
+            this.timeList = res.sort(function(a,b){
+                return new Date(a.dtmStart) - new Date(b.dtmStart);
+              }).map(item => {
               this.timeZoneFormat = item.vchTimeZoneID
               const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID)
               const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID)
