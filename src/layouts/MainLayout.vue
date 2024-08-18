@@ -14,6 +14,22 @@
         <q-toolbar-title>
           Gerenciador de tarefas
         </q-toolbar-title>
+        <div class='text-right'>
+        <q-btn-dropdown
+          flat
+          dense
+          round
+          icon="account_circle"
+        >
+      <q-list dense>
+        <q-item clickable v-ripple @click='logout()'>
+          <q-item-section >
+            Sair
+          </q-item-section>
+        </q-item>
+      </q-list>
+      </q-btn-dropdown>
+      </div>
       </q-toolbar>
     </q-header>
 
@@ -65,6 +81,12 @@ export default {
       leftDrawerOpen: false,
       essentialLinks: linksData
     }
-  }
+  },
+  methods:{
+      logout(){
+        localStorage.removeItem('jwtoken')
+        this.$router.push('/login')
+      }
+    }
 }
 </script>

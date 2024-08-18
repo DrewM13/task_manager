@@ -272,7 +272,7 @@
      {{ time }}
     </div>
     <div class='col text-right q-gutter-x-sm'>
-      <q-btn color="red" outline round icon='close' size='sm' @click='deleteTime(time, idx)'>
+      <q-btn color="red" outline round icon='close' size='sm' @click='deleteTime(idx)'>
         <q-tooltip>
           Excluir
         </q-tooltip>
@@ -612,7 +612,7 @@
     });
     return isOverlapping
   },
-    deleteTime(time, position){
+    deleteTime(position){
       if(this.timeTraked[position].idTimeTracker != undefined){
         this.timesToDelete.push(this.timeTraked[position])
       }
@@ -702,14 +702,11 @@
         })
       },
       createTimeTask(timeZoneFormat){
-        // pendente correção
             const arrayData = this.timeTraked.map((data)=>{
             let dtmStart = null
             let dtmEnd = null
-            console.log(DateTime.fromSQL(data.dtmStart, { zone: timeZoneFormat }));
-
-            // dtmStart = this.formatToSendToBack(data.dtmStart, timeZoneFormat)
-            // dtmEnd = this.formatToSendToBack(data.dtmEnd, timeZoneFormat)
+            dtmStart = this.formatToSendToBack(data.dtmStart, timeZoneFormat)
+            dtmEnd = this.formatToSendToBack(data.dtmEnd, timeZoneFormat)
             data.vchTimeZoneID = timeZoneFormat,
             data.idTask = this.taskData.idTask,
             data.idCollaborator = this.taskData.idCollaborator,
@@ -717,16 +714,14 @@
             data.dtmEnd = dtmEnd
           return data
         })
-        // this.TimeTrackerService.create(arrayData.filter(item=>!item.idTimeTracker))
-        //   .then(()=>{
-        //     this.successNotify('Rastreamento de tempo criado com sucesso')
+        this.TimeTrackerService.create(arrayData.filter(item=>!item.idTimeTracker))
+          .then(()=>{
+            this.successNotify('Rastreamento de tempo criado com sucesso')
 
-        //   }).catch(()=>{
-        //     this.errorNotify('Erro ao criar rastreamento de tempo')
-        //   })
-        //   this.deleteTimeTracker()
-        // this.getTasks()
-        // this.timerDialog = false
+          }).catch(()=>{
+            this.errorNotify('Erro ao criar rastreamento de tempo')
+          })
+          this.deleteTimeTracker()
 
       },
       deleteTimeTracker(){
@@ -739,7 +734,8 @@
             this.errorNotify('Erro ao remover rastreamento de tempo')
           })
         }
-
+        this.getTasks()
+        this.timerDialog = false
       },
       deleteTask(data){
         this.$q.dialog({
