@@ -301,73 +301,73 @@
   import TimeTrackerService from 'src/services/TimeTrackerService';
   import Notify from 'src/mixins/notify'
   import date from 'src/mixins/date'
-  import {DateTime} from 'luxon'
+  import { DateTime } from 'luxon'
   const timeZoneList = Intl.supportedValuesOf('timeZone');
-  export default{
-    mixins:[Notify, date],
-    data(){
-      return{
+  export default {
+    mixins: [Notify, date],
+    data () {
+      return {
         TaskService: new TaskService(),
         CollaboratorService: new CollaboratorService(),
         TimeTrackerService: new TimeTrackerService(),
-        dataList:[],
-        filter:'',
-        columns:[
-        {
-          name: 'vchTaskName',
-          label:'Nome',
-          field:'vchTaskName',
-          align:'left'
-        },
+        dataList: [],
+        filter: '',
+        columns: [
           {
-          name: 'vchDescription',
-          label:'Descrição',
-          field:'vchDescription',
-          align:'left'
-        },
-         {
-          name: 'vchCollaboratorName',
-          label:'Responsável',
-          field:'vchCollaboratorName',
-          align:'left',
-          format:(val)=>{ return val || 'Sem atribuição' }
-        },
-        {
-          name: 'dtmCreatedAt',
-          label:'Data de criação',
-          field:'dtmCreatedAt',
-          align:'center',
-          format:(val)=>{return this.formatDate(val)}
-        },
-        {
-          name: 'dtmUpdatedAt',
-          label:'Data de atualização',
-          field:'dtmUpdatedAt',
-          align:'center',
-          format:(val)=>{return this.formatDate(val)}
-        },
-           {
-          name: 'actions',
-          label:'Ações',
-          field:'actions',
-          align:'right',
-          style: 'width: 10px'
-        },
-      ],
-        taskData:{},
-        editData:{},
-        originalData:{},
-        addData:{},
-        editDialog:false,
-        addDialog:false,
-        viewDialog:false,
-        timerDialog:false,
-        timerRunning:false,
-        isInputTime:false,
-        timeList:[],
-        timeTraked:[],
-        collaboratorsOpt:[],
-        timesToDelete:[],
+            name: 'vchTaskName',
+            label: 'Nome',
+            field: 'vchTaskName',
+            align: 'left'
+          },
+          {
+            name: 'vchDescription',
+            label: 'Descrição',
+            field: 'vchDescription',
+            align: 'left'
+          },
+          {
+            name: 'vchCollaboratorName',
+            label: 'Responsável',
+            field: 'vchCollaboratorName',
+            align: 'left',
+            format: (val) => { return val || 'Sem atribuição' }
+          },
+          {
+            name: 'dtmCreatedAt',
+            label: 'Data de criação',
+            field: 'dtmCreatedAt',
+            align: 'center',
+            format: (val) => { return this.formatDate(val) }
+          },
+          {
+            name: 'dtmUpdatedAt',
+            label: 'Data de atualização',
+            field: 'dtmUpdatedAt',
+            align: 'center',
+            format: (val) => { return this.formatDate(val) }
+          },
+          {
+            name: 'actions',
+            label: 'Ações',
+            field: 'actions',
+            align: 'right',
+            style: 'width: 10px'
+          },
+        ],
+        taskData: {},
+        editData: {},
+        originalData: {},
+        addData: {},
+        editDialog: false,
+        addDialog: false,
+        viewDialog: false,
+        timerDialog: false,
+        timerRunning: false,
+        isInputTime: false,
+        timeList: [],
+        timeTraked: [],
+        collaboratorsOpt: [],
+        timesToDelete: [],
         timer: null,
         timeInput: '00:00:00',
         timeZoneFormat: 'America/Sao_Paulo',
@@ -379,398 +379,343 @@
         isLoading: false,
       }
     },
-    mounted(){
-        this.getTasks()
-        this.getCollaboratos()
+    mounted () {
+      this.getTasks()
+      this.getCollaboratos()
     },
-    beforeDestroy() {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
-  },
-  computed: {
-    totalTime () {
-        let totalSeconds = 0;
-        this.timeList.forEach(entry => {
-          const [date1, date2] = entry.split(' - ').map(date => date.trim());
-
-          if (!date1 || !date2) {
-            console.error('Formato de entrada inválido:', entry);
-            return;
-          }
-
-          let startDate = DateTime.fromISO(this.parseCustomDateFormat(date1));
-          let endDate = DateTime.fromISO(this.parseCustomDateFormat(date2));
-          if (!startDate.isValid || !endDate.isValid) {
-            console.error('Erro ao criar objetos DateTime:', date1, date2);
-            return;
-          }
-          const diffInSeconds = endDate.diff(startDate, 'seconds').seconds;
-
-          totalSeconds += diffInSeconds;
-        });
-
-        totalSeconds = Math.min(totalSeconds, 86400);
-
-        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-        const secs = String(totalSeconds % 60).padStart(2, '0');
-
-        return `${hours}:${mins}:${secs}`;
-
-      },
-    isAddButtonDisabled() {
-      const totalSecondsInInput = this.calculateSeconds(this.timeInput);
-      const maxSeconds = 86400;
-      return (
-        this.totalTime >= maxSeconds ||
-        this.totalTime + totalSecondsInInput > maxSeconds
-      );
-    }
-  },
-    methods:{
-      parseCustomDateFormat (dateStr) {
-        let isoDateStr = null
-        if (dateStr.includes(' BRT')) {
-          const [dateTimePart, timeZonePart] = dateStr.split(' BRT');
-          const [datePart, timePart] = dateTimePart.trim().split(', ');
-          const [hours, minutes, seconds] = timePart.split(':');
-          isoDateStr = `${hours}:${minutes}:${seconds}`;
-        } else {
-          const [dateTimePart, timeZonePart] = dateStr.split(' GMT');
-          const [datePart, timePart] = dateTimePart.trim().split(', ');
-
-          const [hours, minutes, seconds] = timePart.split(':');
-          isoDateStr = `${hours}:${minutes}:${seconds}`;
-        }
-        return isoDateStr
+    beforeDestroy () {
+      if (this.timer) {
+        clearInterval(this.timer);
+      }
     },
-      validateTime(startTime, endTime){
-        return startTime<=endTime
+    computed: {
+      totalTime () {
+        return this.getTotalTime(this.timeList)
       },
-      validateInput (){
-        const isNull = this.startTimeInput== null || this.endTimeInput == null
+      isAddButtonDisabled () {
+        const totalSecondsInInput = this.calculateSeconds(this.timeInput);
+        const maxSeconds = 86400;
+        return (
+          this.totalTime >= maxSeconds ||
+          this.totalTime + totalSecondsInInput > maxSeconds
+        );
+      }
+    },
+    methods: {
+      validateInput () {
+        const isNull = this.startTimeInput == null || this.endTimeInput == null
         const isEmpty = this.startTimeInput == '' || this.endTimeInput == ''
-        return  isNull || isEmpty
+        return isNull || isEmpty
       },
-      getTasks(){
+      getTasks () {
         this.isLoading = true
         this.TaskService.GetByIDProject(this.$route.params.id)
-        .then((res)=>{
-          this.dataList = res
-          this.isLoading = false
-        })
-        .catch((err)=>{
-          this.errorNotify(err.message)
-          this.isLoading = false
-        })
+          .then((res) => {
+            this.dataList = res
+            this.isLoading = false
+          })
+          .catch((err) => {
+            this.errorNotify(err.message)
+            this.isLoading = false
+          })
       },
-      getCollaboratos(){
+      getCollaboratos () {
         this.CollaboratorService.list()
-        .then((res)=>{
-          this.collaboratorsOpt = res.map(item=> {
-            return {
+          .then((res) => {
+            this.collaboratorsOpt = res.map(item => {
+              return {
                 value: item.idCollaborator,
                 label: item.vchCollaboratorName
-            }
+              }
+            })
           })
-        })
-        .catch((err)=>{
-          this.errorNotify(err.message)
-        })
+          .catch((err) => {
+            this.errorNotify(err.message)
+          })
       },
-      getTimeTracked(idTask){
+      getTimeTracked (idTask) {
         this.TimeTrackerService.getByIDTask(idTask)
-        .then((res)=>{
-          this.timeTraked = [...res]
-          this.timeList = res.map(item=>{
-            this.timeZoneFormat = item.vchTimeZoneID
-            const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID);
-            const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID);
-            const entry = `${formattedStart} - ${formattedEnd}`;
-            return entry
+          .then((res) => {
+            this.timeTraked = [...res]
+            this.timeList = res.map(item => {
+              this.timeZoneFormat = item.vchTimeZoneID
+              const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID);
+              const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID);
+              const entry = `${formattedStart} - ${formattedEnd}`;
+              return entry
+            })
+            this.timerDialog = true;
+          }).catch(() => {
+            this.errorNotify('Erro ao listar tempos rastreados')
           })
-          this.timerDialog = true;
-        }).catch(()=>{
-          this.errorNotify('Erro ao listar tempos rastreados')
-        })
       },
-      getTimeTrackedToView(idTask){
-      this.isLoading = true
+      getTimeTrackedToView (idTask) {
+        this.isLoading = true
         this.TimeTrackerService.getByIDTask(idTask)
-        .then((res)=>{
-          this.timeList = res.map(item=>{
-            this.timeZoneFormat = item.vchTimeZoneID
-            const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID)
-            const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID)
-            const entry = `${formattedStart} - ${formattedEnd}`
-            return entry
+          .then((res) => {
+            this.timeList = res.map(item => {
+              this.timeZoneFormat = item.vchTimeZoneID
+              const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID)
+              const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID)
+              const entry = `${formattedStart} - ${formattedEnd}`
+              return entry
+            })
+            this.isLoading = false
+            this.viewDialog = true
+          }).catch(() => {
+            this.errorNotify('Erro ao listar tempos rastreados')
+            this.isLoading = false
           })
-          this.isLoading = false
-          this.viewDialog = true
-        }).catch(()=>{
-          this.errorNotify('Erro ao listar tempos rastreados')
-          this.isLoading = false
-        })
       },
-      calculateSeconds(time) {
-      const [hours, minutes, seconds] = time.split(':').map(Number);
-      return (hours * 3600) + (minutes * 60) + seconds;
-    },
-
-    toggleTimer() {
-      if (this.timerRunning) {
-        clearInterval(this.timer);
-        this.timerRunning = false;
-         this.endTime = new Date();
-      } else {
-        this.startTimer();
-      }
-    },
-    startTimer() {
-      let [hours, minutes, seconds] = [0, 0, 0];
-
-      if (this.timeInput.includes(':')) {
-        [hours, minutes, seconds] = this.timeInput.split(':').map(Number);
-      }
-
-      this.totalSeconds = hours * 3600 + minutes * 60 + seconds;
-      this.startTime = new Date();
-
-      this.timerRunning = true;
-      this.timer = setInterval(() => {
-        this.totalSeconds++;
-
-        if (this.totalSeconds >= 86400) {
-          this.totalSeconds = 86400;
-          this.timeInput = "24:00:00";
-          this.toggleTimer();
+      toggleTimer () {
+        if (this.timerRunning) {
+          clearInterval(this.timer);
+          this.timerRunning = false;
+          this.endTime = new Date();
         } else {
-          const hrs = String(Math.floor(this.totalSeconds / 3600)).padStart(2, '0');
-          const mins = String(Math.floor((this.totalSeconds % 3600) / 60)).padStart(2, '0');
-          const secs = String(this.totalSeconds % 60).padStart(2, '0');
-          this.timeInput = `${hrs}:${mins}:${secs}`;
+          this.startTimer();
         }
-      }, 1000);
-    },
-    addTimeByInput(){
-      if(this.startTimeInput && this.endTimeInput){
-        this.startTime =  this.convertToDateTime(this.startTimeInput,this.timeZoneFormat)
-      this.endTime =  this.convertToDateTime(this.endTimeInput,this.timeZoneFormat)
-      const formattedStart = this.formatDateTime(this.startTime, this.timeZoneFormat);
-      const formattedEnd = this.formatDateTime(this.endTime, this.timeZoneFormat);
-      const entry = `${formattedStart} - ${formattedEnd}`;
+      },
+      startTimer () {
+        let [hours, minutes, seconds] = [0, 0, 0];
 
-        if(this.timeList.some(entry => entry.trim() === `${formattedStart} - ${formattedEnd}`)){
-          this.errorNotify('O intervalo já existe!')
-        }
-        else if(this.isOverlapping(formattedStart, formattedEnd)){
-          this.errorNotify('O intervalo não deve sobrepôr intervalos existentes!')
-        }
-        else{
-          this.timeTraked.push({dtmStart: formattedStart, dtmEnd: formattedEnd})
-          this.timeList.push(entry);
-          this.timeInput = '00:00:00';
-          this.startTime = null;
-          this.startTimeInput = null;
-          this.endTime = null;
-          this.endTimeInput = null;
-          this.totalSeconds = 0;
+        if (this.timeInput.includes(':')) {
+          [hours, minutes, seconds] = this.timeInput.split(':').map(Number);
         }
 
-      }
-    },
-    addTime() {
-      if (this.startTime && this.endTime && !this.isAddButtonDisabled) {
-        const formattedStart = this.formatDateTime(this.startTime, this.timeZoneFormat);
-        const formattedEnd = this.formatDateTime(this.endTime, this.timeZoneFormat);
-        const entry = `${formattedStart} - ${formattedEnd}`;
-        if(this.isOverlapping(formattedStart, formattedEnd)){
-        this.errorNotify('O intervalo não deve sobrepôr intervalos existentes!')
+        this.totalSeconds = hours * 3600 + minutes * 60 + seconds;
+        this.startTime = new Date();
+
+        this.timerRunning = true;
+        this.timer = setInterval(() => {
+          this.totalSeconds++;
+
+          if (this.totalSeconds >= 86400) {
+            this.totalSeconds = 86400;
+            this.timeInput = "24:00:00";
+            this.toggleTimer();
+          } else {
+            const hrs = String(Math.floor(this.totalSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((this.totalSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(this.totalSeconds % 60).padStart(2, '0');
+            this.timeInput = `${hrs}:${mins}:${secs}`;
+          }
+        }, 1000);
+      },
+      addTimeByInput () {
+        if (this.startTimeInput && this.endTimeInput) {
+          this.startTime = this.convertToDateTime(this.startTimeInput, this.timeZoneFormat)
+          this.endTime = this.convertToDateTime(this.endTimeInput, this.timeZoneFormat)
+          const formattedStart = this.formatDateTime(this.startTime, this.timeZoneFormat);
+          const formattedEnd = this.formatDateTime(this.endTime, this.timeZoneFormat);
+          const entry = `${formattedStart} - ${formattedEnd}`;
+
+          if (this.timeList.some(entry => entry.trim() === `${formattedStart} - ${formattedEnd}`)) {
+            this.errorNotify('O intervalo já existe!')
+          }
+          else if (this.isOverlapping(formattedStart, formattedEnd)) {
+            this.errorNotify('O intervalo não deve sobrepôr intervalos existentes!')
+          }
+          else {
+            this.timeTraked.push({ dtmStart: formattedStart, dtmEnd: formattedEnd })
+            this.timeList.push(entry);
+            this.timeInput = '00:00:00';
+            this.startTime = null;
+            this.startTimeInput = null;
+            this.endTime = null;
+            this.endTimeInput = null;
+            this.totalSeconds = 0;
+          }
+
         }
-        else if(this.timeList.some(entry => entry.trim() === `${formattedStart} - ${formattedEnd}`)){
-        this.errorNotify('O intervalo já existe!')
+      },
+      addTime () {
+        if (this.startTime && this.endTime && !this.isAddButtonDisabled) {
+          const formattedStart = this.formatDateTime(this.startTime, this.timeZoneFormat);
+          const formattedEnd = this.formatDateTime(this.endTime, this.timeZoneFormat);
+          const entry = `${formattedStart} - ${formattedEnd}`;
+          if (this.isOverlapping(formattedStart, formattedEnd)) {
+            this.errorNotify('O intervalo não deve sobrepôr intervalos existentes!')
+          }
+          else if (this.timeList.some(entry => entry.trim() === `${formattedStart} - ${formattedEnd}`)) {
+            this.errorNotify('O intervalo já existe!')
+          }
+          else {
+            this.timeTraked.push({ dtmStart: formattedStart, dtmEnd: formattedEnd })
+            this.timeList.push(entry);
+            this.timeInput = '00:00:00';
+            this.startTime = null;
+            this.endTime = null;
+            this.totalSeconds = 0;
+          }
         }
-       else{
-        this.timeTraked.push({dtmStart: formattedStart, dtmEnd: formattedEnd})
-        this.timeList.push(entry);
-        this.timeInput = '00:00:00';
-        this.startTime = null;
-        this.endTime = null;
-        this.totalSeconds = 0;
+      },
+      isOverlapping (newStart, newEnd) {
+        const isOverlapping = this.timeList.some(entry => {
+          const [start, end] = entry.split(' - ').map(time => time.trim());
+          return (newStart < end && newEnd > start);
+        });
+        return isOverlapping
+      },
+      deleteTime (position) {
+        if (this.timeTraked[position].idTimeTracker != undefined) {
+          this.timesToDelete.push(this.timeTraked[position])
         }
-      }
-    },
-    isOverlapping(newStart, newEnd) {
-    const newStartSeconds = this.timeZoneFormat !== 'Local' ? newStart : this.calculateSeconds(newStart.split(' ')[1]);
-    const newEndSeconds = this.timeZoneFormat !== 'Local'  ? newEnd : this.calculateSeconds(newEnd.split(' ')[1]);
-    const isOverlapping =  this.timeList.some(entry => {
-      const [start, end] = entry.split(' - ').map(time => time.trim());
-      const startSeconds = this.timeZoneFormat !== 'Local'  ? start : this.calculateSeconds(start.split(' ')[1]);
-      const endSeconds = this.timeZoneFormat !== 'Local'  ? end : this.calculateSeconds(end.split(' ')[1]);
-      return (newStartSeconds < endSeconds && newEndSeconds > startSeconds);
-    });
-    return isOverlapping
-  },
-    deleteTime(position){
-      if(this.timeTraked[position].idTimeTracker != undefined){
-        this.timesToDelete.push(this.timeTraked[position])
-      }
-      this.timeTraked.splice(position, 1)
-      this.timeList.splice(position, 1)
-    },
-    reset(){
-      this.timeList = []
-      this.timeTraked = []
-      this.timeInput = '00:00:00'
-    },
-      editTask(data, originalData){
+        this.timeTraked.splice(position, 1)
+        this.timeList.splice(position, 1)
+      },
+      reset () {
+        this.timeList = []
+        this.timeTraked = []
+        this.timeInput = '00:00:00'
+      },
+      editTask (data, originalData) {
         const sendObj = {
           vchTaskName: data.vchTaskName,
           idTask: data.idTask,
           vchDescription: data.vchDescription,
         }
         this.TaskService.update(sendObj)
-        .then(()=>{
-          if(data.idCollaborator){
-            if(originalData.idCollaborator != data.idCollaborator){
-              this.$q.dialog({
-          title: 'Atenção',
-          message: `Esse colaborador pode ter tempos rastreados nessa tarefa, eles serão removidos, deseja continuar?`,
+          .then(() => {
+            if (data.idCollaborator) {
+              if (originalData.idCollaborator != data.idCollaborator) {
+                this.$q.dialog({
+                  title: 'Atenção',
+                  message: `O responsável ${originalData.vchCollaboratorName} pode ter tempos rastreados nessa tarefa, eles serão removidos, deseja continuar?`,
 
-          cancel: true,
-          persistent: true,
-          cancel: {color: 'grey', outline: true,  noCaps: true},
-          ok: {color: 'red',noCaps: true}
+                  cancel: true,
+                  persistent: true,
+                  cancel: { color: 'grey', outline: true, noCaps: true },
+                  ok: { color: 'red', noCaps: true }
 
-        }).onOk(() => {
-          this.addOrEditCollaboratorToTask(data.idTask, data.idCollaborator)
-        })
-      } else{
-        this.addOrEditCollaboratorToTask(data.idTask, data.idCollaborator)
-      }
-          } else{
-            this.getTasks()
-          this.editDialog = false
-          this.successNotify(`Tarefa ${data.vchTaskName} editada com sucesso!`)
-          }
+                }).onOk(() => {
+                  this.addOrEditCollaboratorToTask(data.idTask, data.idCollaborator)
+                })
+              } else {
+                this.addOrEditCollaboratorToTask(data.idTask, data.idCollaborator)
+              }
+            } else {
+              this.getTasks()
+              this.editDialog = false
+              this.successNotify(`Tarefa ${data.vchTaskName} editada com sucesso!`)
+            }
 
-        })
-        .catch((err)=>{
-          this.errorNotify('Erro ao editar projeto: ' + err.message)
-        })
+          })
+          .catch((err) => {
+            this.errorNotify('Erro ao editar projeto: ' + err.message)
+          })
 
       },
-      addTask(data){
+      addTask (data) {
         const sendObj = {
           vchTaskName: data.vchTaskName,
           vchDescription: data.vchDescription,
           idProject: this.$route.params.id
         }
         this.TaskService.create(sendObj)
-        .then((res)=>{
+          .then((res) => {
 
-          if(data.idCollaborator){
-            this.addOrEditCollaboratorToTask(res.idTask, data.idCollaborator)
-          } else{
-            this.getTasks()
-            this.addDialog = false
-            this.successNotify(`Tarefa ${data.vchTaskName} criada com sucesso!`)
-          }
+            if (data.idCollaborator) {
+              this.addOrEditCollaboratorToTask(res.idTask, data.idCollaborator)
+            } else {
+              this.getTasks()
+              this.addDialog = false
+              this.successNotify(`Tarefa ${data.vchTaskName} criada com sucesso!`)
+            }
 
 
-        })
-        .catch((err)=>{
-          this.errorNotify('Erro ao criar tarefa: ' + err.message)
-        })
+          })
+          .catch((err) => {
+            this.errorNotify('Erro ao criar tarefa: ' + err.message)
+          })
 
       },
-      addOrEditCollaboratorToTask(idTask, idCollaborator){
+      addOrEditCollaboratorToTask (idTask, idCollaborator) {
         const objToSend = {
           idTask: idTask,
           idCollaborator: idCollaborator
         }
 
         this.CollaboratorService.create(objToSend)
-        .then(()=>{
+          .then(() => {
             this.getTasks()
             this.addDialog = false
             this.editDialog = false
-        })
-        .catch((err)=>{
-          this.errorNotify('Erro ao criar ou editar associação: ' + err.message)
-        })
+          })
+          .catch((err) => {
+            this.errorNotify('Erro ao criar ou editar associação: ' + err.message)
+          })
       },
-      createTimeTask(timeZoneFormat){
-            const arrayData = this.timeTraked.map((data)=>{
-            let dtmStart = null
-            let dtmEnd = null
-            dtmStart = this.formatToSendToBack(data.dtmStart, timeZoneFormat)
-            dtmEnd = this.formatToSendToBack(data.dtmEnd, timeZoneFormat)
-            data.vchTimeZoneID = timeZoneFormat,
+      createTimeTask (timeZoneFormat) {
+        const arrayData = this.timeTraked.filter(item => !item.idTimeTracker).map((data) => {
+          let dtmStart = null
+          let dtmEnd = null
+          dtmStart = this.formatToSendToBack(data.dtmStart, timeZoneFormat)
+          dtmEnd = this.formatToSendToBack(data.dtmEnd, timeZoneFormat)
+          data.vchTimeZoneID = timeZoneFormat,
             data.idTask = this.taskData.idTask,
             data.idCollaborator = this.taskData.idCollaborator,
             data.dtmStart = dtmStart,
             data.dtmEnd = dtmEnd
           return data
         })
-        this.TimeTrackerService.create(arrayData.filter(item=>!item.idTimeTracker))
-          .then(()=>{
+        this.TimeTrackerService.create(arrayData)
+          .then(() => {
             this.successNotify('Rastreamento de tempo criado com sucesso')
 
-          }).catch(()=>{
+          }).catch(() => {
             this.errorNotify('Erro ao criar rastreamento de tempo')
           })
-          this.deleteTimeTracker()
+        this.deleteTimeTracker()
 
       },
-      deleteTimeTracker(){
-        if(this.timesToDelete.length){
+      deleteTimeTracker () {
+        if (this.timesToDelete.length) {
           this.TimeTrackerService.remove(this.timesToDelete)
-          .then(()=>{
-            this.successNotify('Rastreamento de tempo removido com sucesso')
+            .then(() => {
+              this.successNotify('Rastreamento de tempo removido com sucesso')
 
-          }).catch(()=>{
-            this.errorNotify('Erro ao remover rastreamento de tempo')
-          })
+            }).catch(() => {
+              this.errorNotify('Erro ao remover rastreamento de tempo')
+            })
         }
         this.getTasks()
         this.timerDialog = false
       },
-      deleteTask(data){
+      deleteTask (data) {
         this.$q.dialog({
           title: 'Atenção',
           message: `Deseja remover o tarefa ${data.vchTaskName}?`,
 
           cancel: true,
           persistent: true,
-          cancel: {color: 'grey', outline: true,  noCaps: true},
-          ok: {color: 'red',noCaps: true}
+          cancel: { color: 'grey', outline: true, noCaps: true },
+          ok: { color: 'red', noCaps: true }
 
         }).onOk(() => {
           this.TaskService.remove(data.idTask)
-        .then(()=>{
-          this.getTasks()
-          this.successNotify('Tarefa excluída com sucesso')
-        })
-        .catch(()=>{
-          this.errorNotify('Erro ao excluir tarefa')
-        })
+            .then(() => {
+              this.getTasks()
+              this.successNotify('Tarefa excluída com sucesso')
+            })
+            .catch(() => {
+              this.errorNotify('Erro ao excluir tarefa')
+            })
         })
 
       },
       filterFn (val, update) {
-      if (val === '') {
+        if (val === '') {
+          update(() => {
+            this.timeZoneOptions = timeZoneList
+          })
+          return
+        }
         update(() => {
-          this.timeZoneOptions = timeZoneList
+          const needle = val.toLowerCase()
+          this.timeZoneOptions = timeZoneList.filter(v => v.toLowerCase().indexOf(needle) > -1)
         })
-        return
       }
-      update(() => {
-        const needle = val.toLowerCase()
-        this.timeZoneOptions = timeZoneList.filter(v => v.toLowerCase().indexOf(needle) > -1)
-      })
-    }
     }
   }
   </script>

@@ -95,20 +95,20 @@ Não há dados para o filtro aplicado, tente aplicar um filtro diferente
 </template>
 
 <script>
-  import DashboardService from 'src/services/DashboardService'
-  import CollaboratorService from 'src/services/CollaboratorService'
-  import ProjectService from 'src/services/ProjectService'
-  import notify from 'src/mixins/notify'
-  import date from 'src/mixins/date'
+import DashboardService from 'src/services/DashboardService'
+import CollaboratorService from 'src/services/CollaboratorService'
+import ProjectService from 'src/services/ProjectService'
+import notify from 'src/mixins/notify'
+import date from 'src/mixins/date'
 export default {
   name: 'Dashboard',
-  mixins:[notify, date],
-  data(){
+  mixins: [notify, date],
+  data () {
     return {
       DashboardService: new DashboardService(),
       ProjectService: new ProjectService(),
       CollaboratorService: new CollaboratorService(),
-      dataFilter:{
+      dataFilter: {
         idProject: null,
         idCollaborator: null
       },
@@ -118,28 +118,28 @@ export default {
       isLoading: false
     }
   },
-  mounted(){
+  mounted () {
     this.getCollaborators()
     this.getProject()
     this.getDashBoard()
   },
-  methods:{
-      getDashBoard(){
-        this.isLoading = true
-        this.DashboardService.getDashboard(this.dataFilter)
-        .then((res)=>{
+  methods: {
+    getDashBoard () {
+      this.isLoading = true
+      this.DashboardService.getDashboard(this.dataFilter)
+        .then((res) => {
           this.dashboardData = res
           this.isLoading = false
         })
-        .catch((error)=>{
+        .catch((error) => {
           this.errorNotify(error.message)
           this.isLoading = false
         })
-      },
-        getCollaborators(){
-        this.CollaboratorService.list()
-        .then((res)=>{
-          this.collaboradorOptions = res.map(item=>{
+    },
+    getCollaborators () {
+      this.CollaboratorService.list()
+        .then((res) => {
+          this.collaboradorOptions = res.map(item => {
             const data = {
               value: item.idCollaborator,
               label: item.vchCollaboratorName
@@ -147,24 +147,24 @@ export default {
             return data
           })
         })
-        .catch((error)=>{
+        .catch((error) => {
           this.errorNotify(error.message)
         })
-      },
-        getProject(){
-        this.ProjectService.list().then((res)=>{
-          this.projectOptions = res.map(item=>{
-            const data = {
-              label: item.vchProjectName,
-              value: item.idProject
-            }
-            return data
-          })
+    },
+    getProject () {
+      this.ProjectService.list().then((res) => {
+        this.projectOptions = res.map(item => {
+          const data = {
+            label: item.vchProjectName,
+            value: item.idProject
+          }
+          return data
         })
-        .catch((error)=>{
+      })
+        .catch((error) => {
           this.errorNotify(error.message)
         })
-      }
     }
+  }
 }
 </script>
