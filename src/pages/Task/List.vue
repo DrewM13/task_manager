@@ -6,84 +6,42 @@
         Tarefas
       </div>
       <div class='text-right col'>
-        <q-btn color="green" text-color="white" label="Adicionar"  @click="addDialog = true"/>
+        <q-btn color="green" text-color="white" label="Adicionar" icon='add' rounded @click="addDialog = true"/>
       </div>
     </q-card-section>
     <q-separator  />
-  <q-card-section v-if='dataList.length' class='row q-gutter-md'>
- <q-card v-for="(data, idx) in dataList" :key="idx" class="col-auto column">
-        <q-card-section class='row items-center col'>
-            <div class='col text-bold text-left'>
-              Nome:
-            </div>
-             <div class='col text-right ellipsis'>
-              {{ data.vchTaskName }}
-            </div>
-        </q-card-section>
-        <q-separator/>
-        <q-card-section class='row items-center col'>
-            <div class='col text-bold text-left'>
-              Descrição:
-            </div>
-             <div class='col text-right ellipsis'>
-              {{ data.vchDescription }}
-            </div>
-        </q-card-section>
-        <q-separator/>
-         <q-card-section class='row items-center col'>
-  <div class='col text-bold text-left'>
-    Responsável:
-  </div>
-  <div class='col text-right ellipsis'>
-    {{ data.vchCollaboratorName || 'Sem atribuição' }}
-  </div>
-
-        </q-card-section>
-        <q-separator/>
-         <q-card-section class='row items-center col'>
-  <div class='col text-bold text-left'>
-    Tempo rastreado:
-  </div>
-  <div class='col text-right text-right'>
-    <!-- {{ getTimeTracked(data.timeTraked) }} -->
-  </div>
-
-        </q-card-section>
-        <q-separator/>
-          <q-card-section class='row items-center col'>
-  <div class='col text-bold text-left'>
-   Status:
-  </div>
-  <div class='col text-right text-right'>
-    {{ data.vchStatus }}
-  </div>
-
-        </q-card-section>
-        <q-separator/>
-        <q-card-section class='row'>
-          <div class='col'>
-
-            <q-btn-dropdown color="white" text-color="black" icon='settings' >
+  <q-card-section v-if='dataList.length' class='row q-gutter-md full-width'>
+    <q-table  :data="dataList" :columns="columns" class='full-width' row-key="idTask" :filter="filter" separator='cell' flat bordered>
+      <template v-slot:top-right>
+        <q-input outlined dense debounce="300" v-model="filter" placeholder="Pesquisar" >
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </template>
+      <template v-slot:body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn-dropdown color="white" text-color="black" icon='settings' >
       <q-list bordered>
-        <q-item clickable v-ripple v-close-popup @click="getTimeTracked(data.idTask); taskData = data" v-if='data.vchCollaboratorName !== null'>
+        <q-item clickable v-ripple v-close-popup @click="getTimeTracked(props.row.idTask); taskData = props.row" v-if='props.row.vchCollaboratorName !== null'>
           <q-item-section avatar>
             <q-icon color="grey" name="timer" />
           </q-item-section>
           <q-item-section>Tempo gasto</q-item-section>
         </q-item>
-         <q-item clickable v-ripple v-close-popup @click="viewDialog = true; taskData = data;">
+         <q-item clickable v-ripple v-close-popup @click="taskData = props.row; getTimeTrackedToView(props.row.idTask)">
           <q-item-section avatar>
             <q-icon color="indigo" name="preview" />
           </q-item-section>
           <q-item-section>Visualizar</q-item-section>
         </q-item>
-          <q-item clickable v-ripple v-close-popup @click="editDialog = true; editData = {...data}; originalData = data">
+          <q-item clickable v-ripple v-close-popup @click="editDialog = true; editData = {...props.row}; originalData = props.row">
           <q-item-section avatar>
             <q-icon color="amber" name="edit" />
           </q-item-section>
           <q-item-section>Editar</q-item-section>
         </q-item>
-        <q-item clickable v-ripple v-close-popup @click='deleteTask(data)'>
+        <q-item clickable v-ripple v-close-popup @click='deleteTask(props.row)'>
           <q-item-section>
             <q-icon color="red" name="delete" size='sm'/>
           </q-item-section>
@@ -91,15 +49,9 @@
         </q-item>
       </q-list>
             </q-btn-dropdown>
-          </div>
-        </q-card-section>
-
-
-    </q-card>
-
-  </q-card-section>
-  <q-card-section style="height: 70vh ;" v-else class='justify-center items-center flex q-ma-none'>
-    Não há tarefas adicionadas
+          </q-td>
+          </template>
+    </q-table>
   </q-card-section>
 
   <!--Edição -->
@@ -148,7 +100,11 @@
   <q-dialog v-model="viewDialog">
   <q-card class='full-width'>
     <q-card-section class='text-right q-pa-xs'>
-       <q-btn color="red" icon='close' dense size='md' flat rounded @click='viewDialog = false'/>
+       <q-btn color="red" icon='close' dense size='md' flat rounded @click='viewDialog = false'>
+        <q-tooltip>
+          Fechar
+        </q-tooltip>
+       </q-btn>
 
     </q-card-section>
     <q-card-section class='row items-center col-2'>
@@ -179,22 +135,43 @@
 
       </q-card-section>
       <q-separator/>
-       <q-card-section class='row items-center col-2'>
+      <q-card-section class='row items-center col-2'>
 <div class='col text-bold text-left'>
-  Tempo rastreado:
+  Data de criação:
 </div>
-<div class='col text-right text-right'>
-  <!-- {{getTimeTracked(taskData.timeTraked)}} -->
+<div class='col text-right'>
+  {{formatDate(taskData.dtmCreatedAt) }}
 </div>
 
       </q-card-section>
       <q-separator/>
-        <q-card-section class='row items-center col-2'>
+      <q-card-section class='row items-center col-2'>
 <div class='col text-bold text-left'>
- Status:
+  Data de atualização:
 </div>
-<div class='col text-right text-right'>
-  {{taskData.vchStatus}}
+<div class='col text-right'>
+  {{ formatDate(taskData.dtmUpdatedAt) }}
+</div>
+
+      </q-card-section>
+<q-card-section class='column  col'>
+<div class='col-12  row'>
+  <div class='text-left col text-bold'>
+    Tempos rastreados:
+  </div>
+  <div class='text-right col'>
+    {{ totalTime }}
+  </div>
+</div>
+<div class='col text-right'>
+ <q-list separator dense bordered  v-if='timeList.length' class='rounded-borders'>
+  <q-item v-for='(time, idx) in timeList' :key='idx' class='items-center justify-center'>
+      {{ time }}
+  </q-item>
+ </q-list>
+ <div v-else class='text-center'>
+  Não há tempos rastreados para essa tarefa
+ </div>
 </div>
 
       </q-card-section>
@@ -204,8 +181,9 @@
 <q-dialog v-model="timerDialog" persistent>
 <q-card  class=' full-width'>
 <q-card-section class='row'>
-<div class="text-h6 col">Tempo rastreado na tarefa</div>
-<div class="text-h6 text-right col"> {{ totalTime }}</div>
+<div class="text-h6 col"><q-icon name="timelapse" />
+ Tempo rastreado na tarefa</div>
+<div class="text-h6 text-right col-3"> {{ totalTime }}</div>
 </q-card-section>
 <q-card-section>
   <q-toggle v-model="isInputTime" label='Inserir tempo manualmente'/>
@@ -256,9 +234,6 @@
             </q-tooltip>
            </q-btn>
     </div>
-
-
-
   </div>
   <div v-else>
     <q-input readonly mask='##:##:##' dense outlined v-model="timeInput" label="Tempo rastreado" placeholder='insira o tempo (04:10:00)'>
@@ -276,13 +251,15 @@
         </template>
       </q-input>
   </div>
-
       <q-select
         :disable='timeList.length>0'
         outlined
         dense
-        v-model="timeFormat"
-        :options="['ISO', 'Local']"
+        v-model="timeZoneFormat"
+        :options="timeZoneOptions"
+         @filter="filterFn"
+         use-input
+        input-debounce="0"
         label="Formato da Data"
         class="q-mt-md"
       />
@@ -307,11 +284,14 @@
 </q-card-section>
 <q-card-actions align="right">
 <q-btn  label="Cancelar" color="grey" no-caps rounded v-close-popup @click='reset()'/>
-<q-btn :disable='!timeList.length' label="Salvar" color="primary" @click='createTimeTask(timeFormat)' no-caps rounded />
+<q-btn :disable='!timeList.length' label="Salvar" color="primary" @click='createTimeTask(timeZoneFormat)' no-caps rounded />
 </q-card-actions>
 </q-card>
 </q-dialog>
-
+<q-inner-loading :showing="isLoading" class='bg-white'>
+ <q-spinner-gears size="50px" color="primary" />
+ Carregando dados...
+ </q-inner-loading>
   </q-card>
 
   </template>
@@ -322,6 +302,7 @@
   import Notify from 'src/mixins/notify'
   import date from 'src/mixins/date'
   import {DateTime} from 'luxon'
+  const timeZoneList = Intl.supportedValuesOf('timeZone');
   export default{
     mixins:[Notify, date],
     data(){
@@ -330,6 +311,49 @@
         CollaboratorService: new CollaboratorService(),
         TimeTrackerService: new TimeTrackerService(),
         dataList:[],
+        filter:'',
+        columns:[
+        {
+          name: 'vchTaskName',
+          label:'Nome',
+          field:'vchTaskName',
+          align:'left'
+        },
+          {
+          name: 'vchDescription',
+          label:'Descrição',
+          field:'vchDescription',
+          align:'left'
+        },
+         {
+          name: 'vchCollaboratorName',
+          label:'Responsável',
+          field:'vchCollaboratorName',
+          align:'left',
+          format:(val)=>{ return val || 'Sem atribuição' }
+        },
+        {
+          name: 'dtmCreatedAt',
+          label:'Data de criação',
+          field:'dtmCreatedAt',
+          align:'center',
+          format:(val)=>{return this.formatDate(val)}
+        },
+        {
+          name: 'dtmUpdatedAt',
+          label:'Data de atualização',
+          field:'dtmUpdatedAt',
+          align:'center',
+          format:(val)=>{return this.formatDate(val)}
+        },
+           {
+          name: 'actions',
+          label:'Ações',
+          field:'actions',
+          align:'right',
+          style: 'width: 10px'
+        },
+      ],
         taskData:{},
         editData:{},
         originalData:{},
@@ -346,11 +370,13 @@
         timesToDelete:[],
         timer: null,
         timeInput: '00:00:00',
-        timeFormat: 'Local',
+        timeZoneFormat: 'America/Sao_Paulo',
+        timeZoneOptions: timeZoneList,
         startTime: null,
         startTimeInput: null,
         endTime: null,
         endTimeInput: null,
+        isLoading: false,
       }
     },
     mounted(){
@@ -363,44 +389,36 @@
     }
   },
   computed: {
-    totalTime() {
-      let totalSeconds = 0;
-    this.timeList.forEach(entry => {
-      const [date1, date2] = entry.split(' - ').map(date => date.trim());
+    totalTime () {
+        let totalSeconds = 0;
+        this.timeList.forEach(entry => {
+          const [date1, date2] = entry.split(' - ').map(date => date.trim());
 
-      if (!date1 || !date2) {
-        console.error('Formato de entrada inválido:', entry);
-       return;
-      }
+          if (!date1 || !date2) {
+            console.error('Formato de entrada inválido:', entry);
+            return;
+          }
 
-      let startDate, endDate;
+          let startDate = DateTime.fromISO(this.parseCustomDateFormat(date1));
+          let endDate = DateTime.fromISO(this.parseCustomDateFormat(date2));
+          if (!startDate.isValid || !endDate.isValid) {
+            console.error('Erro ao criar objetos DateTime:', date1, date2);
+            return;
+          }
+          const diffInSeconds = endDate.diff(startDate, 'seconds').seconds;
 
-      if (this.timeFormat !== 'Local') {
-       startDate = new Date(date1);
-       endDate = new Date(date2);
-      } else {
-        startDate = this.parseCustomDateFormat(date1);
-        endDate = this.parseCustomDateFormat(date2);
-      }
+          totalSeconds += diffInSeconds;
+        });
 
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-    console.error('Erro ao criar objetos Date:', date1, date2);
-    return;
-  }
-  const diffInSeconds = (endDate - startDate) / 1000;
+        totalSeconds = Math.min(totalSeconds, 86400);
 
-  totalSeconds += diffInSeconds;
-});
+        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(totalSeconds % 60).padStart(2, '0');
 
-totalSeconds = Math.min(totalSeconds, 86400);
+        return `${hours}:${mins}:${secs}`;
 
-const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-const secs = String(totalSeconds % 60).padStart(2, '0');
-
-return `${hours}:${mins}:${secs}`;
-
-    },
+      },
     isAddButtonDisabled() {
       const totalSecondsInInput = this.calculateSeconds(this.timeInput);
       const maxSeconds = 86400;
@@ -412,10 +430,20 @@ return `${hours}:${mins}:${secs}`;
   },
     methods:{
       parseCustomDateFormat (dateStr) {
-     const [datePart, timePart] = dateStr.split(' ');
-       const [day, month, year] = datePart.split('/');
-        const [hours, minutes, seconds] = timePart.split(':');
-      return new Date(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+        let isoDateStr = null
+        if (dateStr.includes(' BRT')) {
+          const [dateTimePart, timeZonePart] = dateStr.split(' BRT');
+          const [datePart, timePart] = dateTimePart.trim().split(', ');
+          const [hours, minutes, seconds] = timePart.split(':');
+          isoDateStr = `${hours}:${minutes}:${seconds}`;
+        } else {
+          const [dateTimePart, timeZonePart] = dateStr.split(' GMT');
+          const [datePart, timePart] = dateTimePart.trim().split(', ');
+
+          const [hours, minutes, seconds] = timePart.split(':');
+          isoDateStr = `${hours}:${minutes}:${seconds}`;
+        }
+        return isoDateStr
     },
       validateTime(startTime, endTime){
         return startTime<=endTime
@@ -426,12 +454,15 @@ return `${hours}:${mins}:${secs}`;
         return  isNull || isEmpty
       },
       getTasks(){
+        this.isLoading = true
         this.TaskService.GetByIDProject(this.$route.params.id)
         .then((res)=>{
           this.dataList = res
+          this.isLoading = false
         })
         .catch((err)=>{
           this.errorNotify(err.message)
+          this.isLoading = false
         })
       },
       getCollaboratos(){
@@ -442,7 +473,6 @@ return `${hours}:${mins}:${secs}`;
                 value: item.idCollaborator,
                 label: item.vchCollaboratorName
             }
-
           })
         })
         .catch((err)=>{
@@ -452,18 +482,35 @@ return `${hours}:${mins}:${secs}`;
       getTimeTracked(idTask){
         this.TimeTrackerService.getByIDTask(idTask)
         .then((res)=>{
-
           this.timeTraked = [...res]
           this.timeList = res.map(item=>{
-            this.timeFormat = item.vchTimeZoneID
-            const formattedStart = this.formatDateTimeFromBack(item.dtmStart);
-            const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd);
+            this.timeZoneFormat = item.vchTimeZoneID
+            const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID);
+            const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID);
             const entry = `${formattedStart} - ${formattedEnd}`;
             return entry
           })
           this.timerDialog = true;
         }).catch(()=>{
           this.errorNotify('Erro ao listar tempos rastreados')
+        })
+      },
+      getTimeTrackedToView(idTask){
+      this.isLoading = true
+        this.TimeTrackerService.getByIDTask(idTask)
+        .then((res)=>{
+          this.timeList = res.map(item=>{
+            this.timeZoneFormat = item.vchTimeZoneID
+            const formattedStart = this.formatDateTimeFromBack(item.dtmStart, item.vchTimeZoneID)
+            const formattedEnd = this.formatDateTimeFromBack(item.dtmEnd, item.vchTimeZoneID)
+            const entry = `${formattedStart} - ${formattedEnd}`
+            return entry
+          })
+          this.isLoading = false
+          this.viewDialog = true
+        }).catch(()=>{
+          this.errorNotify('Erro ao listar tempos rastreados')
+          this.isLoading = false
         })
       },
       calculateSeconds(time) {
@@ -506,18 +553,12 @@ return `${hours}:${mins}:${secs}`;
         }
       }, 1000);
     },
-    // stopTimer() {
-    //   const formattedStart = this.formatDateTime(this.startTime);
-    //   const formattedEnd = this.formatDateTime(this.endTime);
-    //   const entry = `${formattedStart} - ${formattedEnd}`;
-    //   this.timeList.push(entry);
-    // },
     addTimeByInput(){
       if(this.startTimeInput && this.endTimeInput){
-        this.startTime =  this.convertToDateTime(this.startTimeInput)
-      this.endTime =  this.convertToDateTime(this.endTimeInput)
-      const formattedStart = this.formatDateTime(this.startTime, this.timeFormat);
-      const formattedEnd = this.formatDateTime(this.endTime, this.timeFormat);
+        this.startTime =  this.convertToDateTime(this.startTimeInput,this.timeZoneFormat)
+      this.endTime =  this.convertToDateTime(this.endTimeInput,this.timeZoneFormat)
+      const formattedStart = this.formatDateTime(this.startTime, this.timeZoneFormat);
+      const formattedEnd = this.formatDateTime(this.endTime, this.timeZoneFormat);
       const entry = `${formattedStart} - ${formattedEnd}`;
 
         if(this.timeList.some(entry => entry.trim() === `${formattedStart} - ${formattedEnd}`)){
@@ -538,12 +579,11 @@ return `${hours}:${mins}:${secs}`;
         }
 
       }
-
     },
     addTime() {
       if (this.startTime && this.endTime && !this.isAddButtonDisabled) {
-        const formattedStart = this.formatDateTime(this.startTime, this.timeFormat);
-        const formattedEnd = this.formatDateTime(this.endTime, this.timeFormat);
+        const formattedStart = this.formatDateTime(this.startTime, this.timeZoneFormat);
+        const formattedEnd = this.formatDateTime(this.endTime, this.timeZoneFormat);
         const entry = `${formattedStart} - ${formattedEnd}`;
         if(this.isOverlapping(formattedStart, formattedEnd)){
         this.errorNotify('O intervalo não deve sobrepôr intervalos existentes!')
@@ -562,12 +602,12 @@ return `${hours}:${mins}:${secs}`;
       }
     },
     isOverlapping(newStart, newEnd) {
-    const newStartSeconds = this.timeFormat !== 'Local' ? newStart : this.calculateSeconds(newStart.split(' ')[1]);
-    const newEndSeconds = this.timeFormat !== 'Local'  ? newEnd : this.calculateSeconds(newEnd.split(' ')[1]);
+    const newStartSeconds = this.timeZoneFormat !== 'Local' ? newStart : this.calculateSeconds(newStart.split(' ')[1]);
+    const newEndSeconds = this.timeZoneFormat !== 'Local'  ? newEnd : this.calculateSeconds(newEnd.split(' ')[1]);
     const isOverlapping =  this.timeList.some(entry => {
       const [start, end] = entry.split(' - ').map(time => time.trim());
-      const startSeconds = this.timeFormat !== 'Local'  ? start : this.calculateSeconds(start.split(' ')[1]);
-      const endSeconds = this.timeFormat !== 'Local'  ? end : this.calculateSeconds(end.split(' ')[1]);
+      const startSeconds = this.timeZoneFormat !== 'Local'  ? start : this.calculateSeconds(start.split(' ')[1]);
+      const endSeconds = this.timeZoneFormat !== 'Local'  ? end : this.calculateSeconds(end.split(' ')[1]);
       return (newStartSeconds < endSeconds && newEndSeconds > startSeconds);
     });
     return isOverlapping
@@ -584,9 +624,6 @@ return `${hours}:${mins}:${secs}`;
       this.timeTraked = []
       this.timeInput = '00:00:00'
     },
-      getStatus(){
-
-      },
       editTask(data, originalData){
         const sendObj = {
           vchTaskName: data.vchTaskName,
@@ -664,34 +701,32 @@ return `${hours}:${mins}:${secs}`;
           this.errorNotify('Erro ao criar ou editar associação: ' + err.message)
         })
       },
-      createTimeTask(timeFormat){
-     const arrayData = this.timeTraked.map((data)=>{
-       let dtmStart = null
-       let dtmEnd = null
-      if(timeFormat == 'Local'){
-        dtmStart = DateTime.fromFormat(data.dtmStart, 'dd/MM/yyyy HH:mm:ss').toISO()
-        dtmEnd = DateTime.fromFormat(data.dtmEnd, 'dd/MM/yyyy HH:mm:ss').toISO()
-      } else{
-        dtmStart = data.dtmStart
-        dtmEnd = data.dtmEnd
-      }
-            data.vchTimeZoneID = timeFormat,
+      createTimeTask(timeZoneFormat){
+        // pendente correção
+            const arrayData = this.timeTraked.map((data)=>{
+            let dtmStart = null
+            let dtmEnd = null
+            console.log(DateTime.fromSQL(data.dtmStart, { zone: timeZoneFormat }));
+
+            // dtmStart = this.formatToSendToBack(data.dtmStart, timeZoneFormat)
+            // dtmEnd = this.formatToSendToBack(data.dtmEnd, timeZoneFormat)
+            data.vchTimeZoneID = timeZoneFormat,
             data.idTask = this.taskData.idTask,
             data.idCollaborator = this.taskData.idCollaborator,
             data.dtmStart = dtmStart,
             data.dtmEnd = dtmEnd
           return data
         })
-        this.TimeTrackerService.create(arrayData.filter(item=>!item.idTimeTracker))
-          .then(()=>{
-            this.successNotify('Rastreamento de tempo criado com sucesso')
+        // this.TimeTrackerService.create(arrayData.filter(item=>!item.idTimeTracker))
+        //   .then(()=>{
+        //     this.successNotify('Rastreamento de tempo criado com sucesso')
 
-          }).catch(()=>{
-            this.errorNotify('Erro ao criar rastreamento de tempo')
-          })
-          this.deleteTimeTracker()
-        this.getTasks()
-        this.timerDialog = false
+        //   }).catch(()=>{
+        //     this.errorNotify('Erro ao criar rastreamento de tempo')
+        //   })
+        //   this.deleteTimeTracker()
+        // this.getTasks()
+        // this.timerDialog = false
 
       },
       deleteTimeTracker(){
@@ -727,7 +762,19 @@ return `${hours}:${mins}:${secs}`;
         })
         })
 
+      },
+      filterFn (val, update) {
+      if (val === '') {
+        update(() => {
+          this.timeZoneOptions = timeZoneList
+        })
+        return
       }
+      update(() => {
+        const needle = val.toLowerCase()
+        this.timeZoneOptions = timeZoneList.filter(v => v.toLowerCase().indexOf(needle) > -1)
+      })
+    }
     }
   }
   </script>

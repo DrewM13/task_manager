@@ -7,8 +7,6 @@ export default class AuthService extends BaseService{
   login = async (data) => {
     try {
       const response = await this.http.post(this.api, data)
-      console.log(response);
-
       return response.data
     } catch (error) {
       throw error

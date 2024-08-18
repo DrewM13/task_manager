@@ -9,11 +9,12 @@
     <q-select v-model="dataFilter.idCollaborator" :options="collaboradorOptions" map-options emit-value label="Colaboradores" dense outlined clearable/>
   </div>
   <div class="col text-right">
-    <q-btn color="blue"  label="Pesquisar" no-caps rounded @click='getDashBoard()'/>
+    <q-btn color="indigo"  label="Pesquisar" icon='search' no-caps rounded @click='getDashBoard()'/>
   </div>
  </q-card-section>
  </q-card>
  <q-card class="q-ma-md" flat bordered v-if='dashboardData.length'>
+  <q-scroll-area style="height: 80vh;">
 <q-card-section v-for='project in dashboardData' :key='project.idProject'>
  <q-card flat bordered>
  <q-card-section class='row'>
@@ -54,10 +55,10 @@
       <q-list bordered separator>
         <q-item  v-for='time in task.timeTrackeds' :key='time.idTimeTracked'>
           <div v-if='time.idTimeTracked'  class='items-center row'>
-        <div>{{time.dtmStart}} - {{time.dtmEnd}}</div>
+        <div>{{formatDateTimeFromBack(time.dtmStart, time.vchTimeZoneID)}} - {{formatDateTimeFromBack(time.dtmEnd, time.vchTimeZoneID)}}</div>
     </div>
     <div v-else class='items-center row'>
-      Não há tempos rastreados
+      Não há tempos rastreados para essa tarefa
     </div>
         </q-item>
 
@@ -76,13 +77,17 @@
  </q-card>
 
  </q-card-section>
+</q-scroll-area>
  </q-card>
  <q-card class="q-ma-md  flex flex-center" flat bordered style='height: 80vh;' v-else>
  <q-card-section class='text-bold text-h5'>
 Não há dados para o filtro aplicado, tente aplicar um filtro diferente
  </q-card-section>
  </q-card>
-
+ <q-inner-loading :showing="isLoading" class='bg-white'>
+ <q-spinner-gears size="50px" color="primary" />
+ Carregando dados...
+ </q-inner-loading>
   </div>
 
 
@@ -94,9 +99,10 @@ Não há dados para o filtro aplicado, tente aplicar um filtro diferente
   import CollaboratorService from 'src/services/CollaboratorService'
   import ProjectService from 'src/services/ProjectService'
   import notify from 'src/mixins/notify'
+  import date from 'src/mixins/date'
 export default {
   name: 'Dashboard',
-  mixins:[notify],
+  mixins:[notify, date],
   data(){
     return {
       DashboardService: new DashboardService(),
@@ -108,7 +114,8 @@ export default {
       },
       projectOptions: [],
       collaboradorOptions: [],
-      dashboardData: []
+      dashboardData: [],
+      isLoading: false
     }
   },
   mounted(){
@@ -118,12 +125,15 @@ export default {
   },
   methods:{
       getDashBoard(){
+        this.isLoading = true
         this.DashboardService.getDashboard(this.dataFilter)
         .then((res)=>{
           this.dashboardData = res
+          this.isLoading = false
         })
         .catch((error)=>{
           this.errorNotify(error.message)
+          this.isLoading = false
         })
       },
         getCollaborators(){

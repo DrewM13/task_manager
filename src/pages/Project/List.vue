@@ -7,35 +7,37 @@
       Projetos
     </div>
     <div class='text-right col'>
-      <q-btn color="green" text-color="white" label="Adicionar" rounded  @click="addDialog = true"/>
+      <q-btn color="green" text-color="white" label="Adicionar" icon='add' rounded @click="addDialog = true"/>
     </div>
 
   </q-card-section>
   <q-separator    />
 <q-card-section v-if='dataList.length'>
-<q-list bordered v-for='(data, idx) in dataList' :key='idx'>
-  <q-item class='row'>
-    <q-item-section >
-      Nome: {{ data.vchProjectName }}
-    </q-item-section>
-    <q-item-section>Data de criação: {{formatDate(data.dtmCreatedAt)  }}</q-item-section>
-    <q-item-section>Data da última atualização: {{formatDate(data.dtmUpdatedAt)  }}</q-item-section>
-    <q-item-section class='col-auto'>
-      <q-btn-dropdown color="white" text-color="black" icon='settings' >
+  <q-table separator='cell' flat bordered :data="dataList" :columns="columns"  row-key="idProject" :filter="filter">
+    <template v-slot:top-right>
+        <q-input outlined dense debounce="300" v-model="filter" placeholder="Pesquisar" >
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </template>
+      <template v-slot:body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn-dropdown color="white" text-color="black" icon='settings' >
 <q-list bordered>
-  <q-item clickable v-ripple @click="$router.push({name:'tasks', params: {id: data.idProject}})">
+  <q-item clickable v-ripple @click="$router.push({name:'tasks', params: {id: props.row.idProject}})">
     <q-item-section avatar>
       <q-icon color="indigo" name="task" />
     </q-item-section>
     <q-item-section>Tarefa</q-item-section>
   </q-item>
-    <q-item clickable v-ripple @click="editDialog = true; editData = data">
+    <q-item clickable v-ripple @click="editDialog = true; editData = props.row">
     <q-item-section avatar>
       <q-icon color="amber" name="edit" />
     </q-item-section>
     <q-item-section>Editar</q-item-section>
   </q-item>
-  <q-item clickable v-ripple @click='deleteProject(data)'>
+  <q-item clickable v-ripple @click='deleteProject(props.row)'>
     <q-item-section>
       <q-icon color="red" name="delete" size='sm'/>
     </q-item-section>
@@ -43,13 +45,10 @@
   </q-item>
 </q-list>
       </q-btn-dropdown>
-    </q-item-section>
+        </q-td>
+      </template>
+  </q-table>
 
-  </q-item>
-</q-list>
-</q-card-section>
-<q-card-section style="height: 70vh ;" v-else class='justify-center items-center flex q-ma-none'>
-  Não há projetos adicionados
 </q-card-section>
 <q-dialog v-model="editDialog">
 <q-card class='full-width'>
@@ -80,7 +79,10 @@
 </q-card-actions>
 </q-card>
 </q-dialog>
-
+<q-inner-loading :showing="isLoading" class='bg-white'>
+ <q-spinner-gears size="50px" color="primary" />
+ Carregando dados...
+ </q-inner-loading>
 </q-card>
 
 
@@ -99,6 +101,37 @@ export default{
       addData:{},
       editDialog:false,
       addDialog:false,
+      filter: '',
+      columns:[
+        {
+          name: 'vchProjectName',
+          label:'Nome',
+          field:'vchProjectName',
+          align:'left'
+        },
+        {
+          name: 'dtmCreatedAt',
+          label:'Data de criação',
+          field:'dtmCreatedAt',
+          align:'center',
+          format:(val)=>{return this.formatDate(val)}
+        },
+        {
+          name: 'dtmUpdatedAt',
+          label:'Data de atualização',
+          field:'dtmUpdatedAt',
+          align:'center',
+          format:(val)=>{return this.formatDate(val)}
+        },
+           {
+          name: 'actions',
+          label:'Ações',
+          field:'actions',
+          align:'right',
+          style: 'width: 10px'
+        },
+      ],
+      isLoading: false
     }
   },
   mounted(){
@@ -106,12 +139,15 @@ export default{
   },
   methods:{
     getProjects(){
+      this.isLoading = true
       this.ProjectService.list()
       .then((res)=>{
         this.dataList = res
+        this.isLoading = false
       })
       .catch((err)=>{
         this.errorNotify(err.message)
+        this.isLoading = false
       })
     },
     editProject(data){
