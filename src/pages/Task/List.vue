@@ -301,7 +301,6 @@
   import TimeTrackerService from 'src/services/TimeTrackerService';
   import Notify from 'src/mixins/notify'
   import date from 'src/mixins/date'
-  import { DateTime } from 'luxon'
   const timeZoneList = Intl.supportedValuesOf('timeZone');
   export default {
     mixins: [Notify, date],
@@ -659,24 +658,26 @@
             data.dtmEnd = dtmEnd
           return data
         })
-        this.TimeTrackerService.create(arrayData)
+        if(arrayData.length){
+          this.TimeTrackerService.create(arrayData)
           .then(() => {
             this.successNotify('Rastreamento de tempo criado com sucesso')
 
           }).catch(() => {
             this.errorNotify('Erro ao criar rastreamento de tempo')
           })
+        }
         this.deleteTimeTracker()
 
       },
       deleteTimeTracker () {
         if (this.timesToDelete.length) {
-          this.TimeTrackerService.remove(this.timesToDelete)
+          this.TimeTrackerService.removeList(this.timesToDelete)
             .then(() => {
-              this.successNotify('Rastreamento de tempo removido com sucesso')
+              this.successNotify('Rastreamentos de tempo removidos com sucesso')
 
             }).catch(() => {
-              this.errorNotify('Erro ao remover rastreamento de tempo')
+              this.errorNotify('Erro ao remover rastreamentos de tempo')
             })
         }
         this.getTasks()

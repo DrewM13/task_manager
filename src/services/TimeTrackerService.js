@@ -12,5 +12,13 @@ export default class TimeTrackerService extends BaseService{
       throw error
     }
   }
+  removeList = async data => {
+    try {
+      const response = await this.http.delete(`${this.api}/delete`,{data: data} )
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  }
 }
 
